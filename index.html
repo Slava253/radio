@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -48,14 +49,13 @@
             margin-bottom: 30px;
         }
 
-        /* СТАТУС */
         .status {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
             margin-bottom: 25px;
-            padding: 10px;
+            padding: 12px;
             background: rgba(255,255,255,0.05);
             border-radius: 60px;
         }
@@ -66,6 +66,7 @@
             border-radius: 50%;
             display: inline-block;
             transition: 0.3s;
+            flex-shrink: 0;
         }
 
         .dot.offline {
@@ -82,7 +83,7 @@
 
         @keyframes pulse {
             0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.3); opacity: 0.7; }
+            50% { transform: scale(1.4); opacity: 0.7; }
             100% { transform: scale(1); opacity: 1; }
         }
 
@@ -95,7 +96,6 @@
             color: #f5a623;
         }
 
-        /* КНОПКА */
         .btn-main {
             width: 200px;
             height: 200px;
@@ -180,7 +180,6 @@
             100% { transform: scale(1.5); opacity: 0; }
         }
 
-        /* СЧЁТЧИК СЛУШАТЕЛЕЙ */
         .listeners {
             color: #888;
             font-size: 0.9rem;
@@ -193,7 +192,6 @@
             font-size: 1.2rem;
         }
 
-        /* ПЛЕЕР ДЛЯ ПРОСЛУШИВАНИЯ */
         .player {
             background: rgba(255,255,255,0.05);
             border-radius: 20px;
@@ -271,7 +269,6 @@
             flex-shrink: 0;
         }
 
-        /* ТОСТ */
         .toast {
             position: fixed;
             top: 20px;
@@ -279,7 +276,7 @@
             transform: translateX(-50%);
             background: #333;
             color: white;
-            padding: 10px 25px;
+            padding: 12px 25px;
             border-radius: 40px;
             z-index: 100;
             opacity: 0;
@@ -288,6 +285,7 @@
             font-weight: 600;
             font-size: 0.9rem;
             max-width: 90%;
+            text-align: center;
         }
 
         .toast.show {
@@ -297,7 +295,6 @@
         .toast.error { background: #ff4444; }
         .toast.info { background: #2196F3; }
 
-        /* ИСТОРИЯ СООБЩЕНИЙ */
         .history {
             margin-top: 25px;
             max-height: 200px;
@@ -326,7 +323,7 @@
             margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             animation: slideIn 0.3s ease;
         }
 
@@ -339,13 +336,19 @@
             color: #f5a623;
             font-weight: bold;
             font-size: 0.8rem;
-            min-width: 70px;
+            min-width: 60px;
         }
 
         .history-item .h-time {
             color: #666;
             font-size: 0.7rem;
             min-width: 40px;
+        }
+
+        .history-item .h-duration {
+            color: #666;
+            font-size: 0.7rem;
+            min-width: 35px;
         }
 
         .history-item .h-play {
@@ -355,15 +358,11 @@
             cursor: pointer;
             font-size: 0.9rem;
             margin-left: auto;
+            padding: 5px 10px;
         }
 
         .history-item .h-play:active {
             transform: scale(0.9);
-        }
-
-        .history-item .h-duration {
-            color: #666;
-            font-size: 0.7rem;
         }
 
         .empty-history {
@@ -373,7 +372,6 @@
             font-size: 0.9rem;
         }
 
-        /* АДАПТИВ */
         @media (max-width: 500px) {
             .btn-main {
                 width: 160px;
@@ -397,7 +395,6 @@
         <h1>WHOPPER RADIO</h1>
         <div class="sub">Живой эфир • Говорите — все услышат</div>
 
-        <!-- СТАТУС -->
         <div class="status">
             <span class="dot offline" id="statusDot"></span>
             <span class="status-text" id="statusText">
@@ -405,7 +402,6 @@
             </span>
         </div>
 
-        <!-- КНОПКА -->
         <button class="btn-main idle" id="mainBtn" onclick="toggleRecording()">
             <span class="waves"></span>
             <span class="waves"></span>
@@ -414,12 +410,10 @@
             <span class="label" id="btnLabel">ГОВОРИТЬ</span>
         </button>
 
-        <!-- СЛУШАТЕЛИ -->
         <div class="listeners">
             👥 <span id="listenerCount">0</span> слушателей онлайн
         </div>
 
-        <!-- ПЛЕЕР -->
         <div class="player" id="player">
             <button class="play-btn" id="playerPlayBtn" onclick="togglePlayerPlay()">
                 <i class="fas fa-play"></i>
@@ -434,7 +428,6 @@
             <button class="close" onclick="closePlayer()"><i class="fas fa-times"></i></button>
         </div>
 
-        <!-- ИСТОРИЯ -->
         <div class="history" id="historyList">
             <div class="empty-history">
                 <i class="fas fa-radio" style="font-size:1.5rem; display:block; margin-bottom:8px;"></i>
@@ -444,6 +437,7 @@
     </div>
 
     <script>
+        // ========== FIREBASE КОНФИГ ==========
         const firebaseConfig = {
             apiKey: "AIzaSyBlZ5ZtyTXgtXxSJAx1jOxwhTrzlHRJmo",
             authDomain: "bk-cashier.firebaseapp.com",
@@ -458,23 +452,22 @@
         const db = firebase.database();
         const storage = firebase.storage();
 
-        // === ПЕРЕМЕННЫЕ ===
-        let userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 4);
+        // ========== ПЕРЕМЕННЫЕ ==========
+        const userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 4);
+
         let isRecording = false;
         let mediaRecorder = null;
         let stream = null;
         let audioChunks = [];
+        let isMicReady = false;
+
         let isPlaying = false;
         let currentAudio = null;
         let currentMsgId = null;
-        let audioContext = null;
-        let isMicRequested = false;
 
-        // ДЛЯ ЖИВОЙ ПЕРЕДАЧИ
-        let liveInterval = null;
-        let lastChunkTime = 0;
+        let liveListenerRef = null;
 
-        // === ПОКАЗАТЬ ТОСТ ===
+        // ========== ПОКАЗАТЬ ТОСТ ==========
         function showToast(msg, type = 'info') {
             const t = document.getElementById('toast');
             t.textContent = msg;
@@ -484,7 +477,7 @@
             t._timeout = setTimeout(() => t.classList.remove('show'), 2500);
         }
 
-        // === ОБНОВЛЕНИЕ СТАТУСА ===
+        // ========== ОБНОВЛЕНИЕ СТАТУСА ==========
         function setStatus(state, text) {
             const dot = document.getElementById('statusDot');
             const statusText = document.getElementById('statusText');
@@ -492,18 +485,297 @@
             statusText.innerHTML = text;
         }
 
-        // === СЧЁТЧИК СЛУШАТЕЛЕЙ ===
-        function updateListeners() {
-            const ref = db.ref('radio/listeners/' + userId);
-            ref.set({ online: true, lastSeen: Date.now() });
-            ref.onDisconnect().remove();
+        // ========== ЗАПРОС МИКРОФОНА (при первом клике) ==========
+        async function requestMicrophone() {
+            try {
+                showToast('🎤 Запрос доступа к микрофону...', 'info');
 
-            db.ref('radio/listeners').on('value', (sn) => {
-                document.getElementById('listenerCount').textContent = sn.numChildren();
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
+
+                isMicReady = true;
+                showToast('✅ Микрофон подключён!', 'success');
+                return true;
+
+            } catch (err) {
+                console.error('Ошибка доступа к микрофону:', err);
+
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    showToast('❌ Разрешение на микрофон отклонено. Разрешите доступ в браузере.', 'error');
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    showToast('❌ Микрофон не найден. Подключите микрофон.', 'error');
+                } else {
+                    showToast('❌ Ошибка: ' + err.message, 'error');
+                }
+
+                return false;
+            }
+        }
+
+        // ========== ТОГГЛ ЗАПИСИ ==========
+        window.toggleRecording = async () => {
+            // Если уже запись — останавливаем
+            if (isRecording) {
+                stopRecording();
+                return;
+            }
+
+            // Если микрофон ещё не готов — запрашиваем
+            if (!isMicReady) {
+                const ok = await requestMicrophone();
+                if (!ok) return;
+            }
+
+            // Начинаем запись
+            startRecording();
+        };
+
+        // ========== НАЧАТЬ ЗАПИСЬ ==========
+        function startRecording() {
+            try {
+                if (!stream) {
+                    showToast('❌ Микрофон не готов', 'error');
+                    return;
+                }
+
+                // Создаём MediaRecorder
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm;codecs=opus',
+                    audioBitsPerSecond: 64000
+                });
+
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                        sendLiveChunk(event.data);
+                    }
+                };
+
+                // Отправляем данные каждые 400мс для минимальной задержки
+                mediaRecorder.start(400);
+
+                isRecording = true;
+
+                // Обновляем UI
+                const btn = document.getElementById('mainBtn');
+                btn.className = 'btn-main recording';
+                document.getElementById('btnLabel').textContent = 'СТОП';
+                setStatus('recording', '<strong>🔴 LIVE</strong> Идёт трансляция...');
+
+                // Отмечаем в Firebase что идёт LIVE
+                db.ref('radio/live').set({
+                    active: true,
+                    startedAt: Date.now(),
+                    userId: userId,
+                    userName: 'Ведущий'
+                });
+                db.ref('radio/live').onDisconnect().remove();
+
+                showToast('🔴 Эфир начался!', 'info');
+
+            } catch (err) {
+                console.error('Ошибка записи:', err);
+                showToast('❌ Ошибка запуска: ' + err.message, 'error');
+            }
+        }
+
+        // ========== ОТПРАВКА ЖИВОГО ЧАНКА ==========
+        function sendLiveChunk(audioData) {
+            const chunkId = 'chunk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const base64 = reader.result.split(',')[1];
+                    db.ref('radio/live/chunks/' + chunkId).set({
+                        data: base64,
+                        timestamp: Date.now(),
+                        userId: userId
+                    });
+
+                    // Чистим старые чанки (держим только последние 15)
+                    db.ref('radio/live/chunks').once('value', (sn) => {
+                        const keys = [];
+                        sn.forEach(c => keys.push(c.key));
+                        if (keys.length > 15) {
+                            const toRemove = keys.slice(0, keys.length - 15);
+                            toRemove.forEach(k => db.ref('radio/live/chunks/' + k).remove());
+                        }
+                    });
+                } catch (e) {
+                    console.log('Ошибка отправки чанка');
+                }
+            };
+            reader.readAsDataURL(audioData);
+        }
+
+        // ========== ОСТАНОВИТЬ ЗАПИСЬ ==========
+        function stopRecording() {
+            if (!isRecording || !mediaRecorder) return;
+
+            mediaRecorder.stop();
+            isRecording = false;
+
+            // Отключаем live
+            db.ref('radio/live').remove();
+
+            // Обновляем UI
+            const btn = document.getElementById('mainBtn');
+            btn.className = 'btn-main idle';
+            document.getElementById('btnLabel').textContent = 'ГОВОРИТЬ';
+            setStatus('offline', '<strong>🔴</strong> Микрофон выключен');
+
+            // Сохраняем финальную запись
+            if (audioChunks.length > 0) {
+                const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                saveFinalRecording(blob);
+            }
+
+            audioChunks = [];
+            showToast('⏹️ Эфир завершён', 'info');
+        }
+
+        // ========== СОХРАНЕНИЕ ФИНАЛЬНОЙ ЗАПИСИ ==========
+        async function saveFinalRecording(blob) {
+            const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+            const duration = await getAudioDuration(blob);
+
+            try {
+                const ref = storage.ref('radio/audio/' + msgId + '.webm');
+                await ref.put(blob, { contentType: 'audio/webm' });
+
+                await db.ref('radio/messages/' + msgId).set({
+                    id: msgId,
+                    userName: 'Ведущий',
+                    timestamp: Date.now(),
+                    duration: duration,
+                    isLive: false
+                });
+
+                showToast('✅ Запись сохранена', 'success');
+            } catch (err) {
+                console.error('Ошибка сохранения:', err);
+            }
+        }
+
+        // ========== ДЛИТЕЛЬНОСТЬ АУДИО ==========
+        function getAudioDuration(blob) {
+            return new Promise((resolve) => {
+                const audio = new Audio();
+                const url = URL.createObjectURL(blob);
+                audio.src = url;
+                audio.onloadedmetadata = () => {
+                    resolve(audio.duration);
+                    URL.revokeObjectURL(url);
+                };
+                audio.onerror = () => resolve(0);
             });
         }
 
-        // === ЗАГРУЗКА ИСТОРИИ ===
+        // ========== ПРОСЛУШИВАНИЕ ЖИВОГО ЭФИРА ==========
+        function listenLive() {
+            let liveAudio = null;
+            let isLivePlaying = false;
+
+            db.ref('radio/live/chunks').on('child_added', (sn) => {
+                const chunk = sn.val();
+
+                // Пропускаем свои же чанки
+                if (chunk.userId === userId) return;
+
+                try {
+                    const binary = atob(chunk.data);
+                    const array = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        array[i] = binary.charCodeAt(i);
+                    }
+                    const blob = new Blob([array], { type: 'audio/webm' });
+                    const url = URL.createObjectURL(blob);
+
+                    // Останавливаем предыдущий
+                    if (liveAudio) {
+                        liveAudio.pause();
+                        liveAudio = null;
+                    }
+
+                    // Воспроизводим новый чанк
+                    liveAudio = new Audio(url);
+                    liveAudio.volume = 0.8;
+                    liveAudio.play().catch(() => {});
+
+                    // Показываем плеер
+                    const player = document.getElementById('player');
+                    if (!player.classList.contains('active')) {
+                        player.classList.add('active');
+                        document.getElementById('playerName').textContent = '🎙️ LIVE ЭФИР';
+                        document.getElementById('playerPlayBtn').innerHTML = '<i class="fas fa-pause"></i>';
+                        document.getElementById('playerPlayBtn').onclick = () => {
+                            if (liveAudio) {
+                                if (liveAudio.paused) {
+                                    liveAudio.play();
+                                    document.getElementById('playerPlayBtn').innerHTML = '<i class="fas fa-pause"></i>';
+                                } else {
+                                    liveAudio.pause();
+                                    document.getElementById('playerPlayBtn').innerHTML = '<i class="fas fa-play"></i>';
+                                }
+                            }
+                        };
+                    }
+
+                    setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+                } catch (e) {
+                    console.log('Ошибка декодирования');
+                }
+            });
+
+            // Следим за статусом LIVE
+            db.ref('radio/live').on('value', (sn) => {
+                const live = sn.val();
+                if (!live || !live.active) {
+                    if (liveAudio) {
+                        liveAudio.pause();
+                        liveAudio = null;
+                    }
+                    const player = document.getElementById('player');
+                    const name = document.getElementById('playerName');
+                    if (name.textContent === '🎙️ LIVE ЭФИР') {
+                        player.classList.remove('active');
+                    }
+                }
+            });
+        }
+
+        // ========== СЧЁТЧИК СЛУШАТЕЛЕЙ ==========
+        function updateListeners() {
+            // Удаляем старую запись
+            if (liveListenerRef) {
+                liveListenerRef.remove();
+            }
+
+            const ref = db.ref('radio/listeners/' + userId);
+            ref.set({
+                online: true,
+                lastSeen: Date.now(),
+                userAgent: navigator.userAgent.slice(0, 50)
+            });
+            ref.onDisconnect().remove();
+            liveListenerRef = ref;
+
+            db.ref('radio/listeners').on('value', (sn) => {
+                const count = sn.numChildren();
+                document.getElementById('listenerCount').textContent = count;
+            });
+        }
+
+        // ========== ЗАГРУЗКА ИСТОРИИ ==========
         function loadHistory() {
             db.ref('radio/messages').orderByChild('timestamp').limitToLast(50).on('value', (sn) => {
                 const items = [];
@@ -549,271 +821,7 @@
             return m + ':' + (s < 10 ? '0' : '') + s;
         }
 
-        // === ЗАПРОС МИКРОФОНА ===
-        async function requestMic() {
-            if (isMicRequested) return true;
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                isMicRequested = true;
-                showToast('🎤 Микрофон подключён', 'success');
-                return true;
-            } catch (err) {
-                showToast('❌ Нет доступа к микрофону!', 'error');
-                console.error(err);
-                return false;
-            }
-        }
-
-        // === ТОГГЛ ЗАПИСИ ===
-        window.toggleRecording = async () => {
-            if (isRecording) {
-                stopRecording();
-                return;
-            }
-
-            // Запрашиваем микрофон если ещё не просили
-            if (!isMicRequested) {
-                const ok = await requestMic();
-                if (!ok) return;
-            }
-
-            startRecording();
-        };
-
-        // === НАЧАТЬ ЗАПИСЬ (МГНОВЕННАЯ ПЕРЕДАЧА) ===
-        async function startRecording() {
-            try {
-                if (!stream) {
-                    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    isMicRequested = true;
-                }
-
-                // Создаём MediaRecorder с маленьким интервалом для быстрой передачи
-                mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: 'audio/webm;codecs=opus',
-                    audioBitsPerSecond: 64000
-                });
-
-                audioChunks = [];
-
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) {
-                        audioChunks.push(event.data);
-                        // ОТПРАВЛЯЕМ КАЖДЫЙ ЧАНК МГНОВЕННО
-                        sendLiveChunk(event.data);
-                    }
-                };
-
-                // Отправляем данные каждые 500мс для минимальной задержки
-                mediaRecorder.start(500);
-
-                isRecording = true;
-
-                // Обновляем UI
-                const btn = document.getElementById('mainBtn');
-                btn.className = 'btn-main recording';
-                document.getElementById('btnLabel').textContent = 'СТОП';
-                setStatus('recording', '<strong>🔴 LIVE</strong> Идёт трансляция...');
-
-                showToast('🔴 Эфир начался!', 'info');
-
-                // Создаём запись в базе как LIVE
-                const liveRef = db.ref('radio/live');
-                liveRef.set({
-                    active: true,
-                    startedAt: Date.now(),
-                    userId: userId,
-                    userName: 'Ведущий'
-                });
-                liveRef.onDisconnect().remove();
-
-            } catch (err) {
-                console.error('Ошибка записи:', err);
-                showToast('❌ Ошибка запуска', 'error');
-            }
-        }
-
-        // === ОТПРАВКА ЖИВОГО ЧАНКА ===
-        function sendLiveChunk(audioData) {
-            const chunkId = 'chunk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-
-            // Конвертим в base64 для быстрой передачи
-            const reader = new FileReader();
-            reader.onload = () => {
-                const base64 = reader.result.split(',')[1];
-                db.ref('radio/live/chunks/' + chunkId).set({
-                    data: base64,
-                    timestamp: Date.now(),
-                    userId: userId
-                });
-                // Удаляем старые чанки (держим только последние 10)
-                db.ref('radio/live/chunks').once('value', (sn) => {
-                    const keys = [];
-                    sn.forEach(c => keys.push(c.key));
-                    if (keys.length > 10) {
-                        const toRemove = keys.slice(0, keys.length - 10);
-                        toRemove.forEach(k => db.ref('radio/live/chunks/' + k).remove());
-                    }
-                });
-            };
-            reader.readAsDataURL(audioData);
-        }
-
-        // === ОСТАНОВИТЬ ЗАПИСЬ ===
-        function stopRecording() {
-            if (!isRecording || !mediaRecorder) return;
-
-            mediaRecorder.stop();
-            isRecording = false;
-
-            // Отключаем live
-            db.ref('radio/live').remove();
-
-            // Обновляем UI
-            const btn = document.getElementById('mainBtn');
-            btn.className = 'btn-main idle';
-            document.getElementById('btnLabel').textContent = 'ГОВОРИТЬ';
-            setStatus('offline', '<strong>🔴</strong> Микрофон выключен');
-
-            // Сохраняем финальную запись в историю
-            if (audioChunks.length > 0) {
-                const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                saveFinalRecording(blob);
-            }
-
-            audioChunks = [];
-            showToast('⏹️ Эфир завершён', 'info');
-
-            // Освобождаем стрим
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-                isMicRequested = false;
-            }
-        }
-
-        // === СОХРАНЕНИЕ ФИНАЛЬНОЙ ЗАПИСИ ===
-        async function saveFinalRecording(blob) {
-            const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-            const duration = await getAudioDuration(blob);
-
-            // Загружаем в Storage
-            try {
-                const ref = storage.ref('radio/audio/' + msgId + '.webm');
-                await ref.put(blob, { contentType: 'audio/webm' });
-
-                // Сохраняем в базу
-                await db.ref('radio/messages/' + msgId).set({
-                    id: msgId,
-                    userName: 'Ведущий',
-                    timestamp: Date.now(),
-                    duration: duration,
-                    isLive: false
-                });
-
-                showToast('✅ Запись сохранена', 'success');
-            } catch (err) {
-                console.error('Ошибка сохранения:', err);
-            }
-        }
-
-        // === ДЛИТЕЛЬНОСТЬ АУДИО ===
-        function getAudioDuration(blob) {
-            return new Promise((resolve) => {
-                const audio = new Audio();
-                const url = URL.createObjectURL(blob);
-                audio.src = url;
-                audio.onloadedmetadata = () => {
-                    resolve(audio.duration);
-                    URL.revokeObjectURL(url);
-                };
-                audio.onerror = () => resolve(0);
-            });
-        }
-
-        // === ПРОСЛУШИВАНИЕ ЖИВОГО ЭФИРА ===
-        function listenLive() {
-            let lastChunkTime = 0;
-            let audioBuffer = [];
-            let isPlayingLive = false;
-            let liveAudio = null;
-
-            db.ref('radio/live/chunks').on('child_added', (sn) => {
-                const chunk = sn.val();
-                const now = Date.now();
-
-                // Пропускаем свои же чанки
-                if (chunk.userId === userId) return;
-
-                // Декодируем base64
-                try {
-                    const binary = atob(chunk.data);
-                    const array = new Uint8Array(binary.length);
-                    for (let i = 0; i < binary.length; i++) {
-                        array[i] = binary.charCodeAt(i);
-                    }
-                    const blob = new Blob([array], { type: 'audio/webm' });
-                    const url = URL.createObjectURL(blob);
-
-                    // Воспроизводим мгновенно
-                    if (liveAudio) {
-                        liveAudio.pause();
-                        liveAudio = null;
-                    }
-
-                    liveAudio = new Audio(url);
-                    liveAudio.volume = 0.8;
-                    liveAudio.play().catch(() => {});
-
-                    // Показываем, что идёт прослушивание
-                    const player = document.getElementById('player');
-                    if (!player.classList.contains('active')) {
-                        player.classList.add('active');
-                        document.getElementById('playerName').textContent = '🎙️ LIVE ЭФИР';
-                        document.getElementById('playerPlayBtn').innerHTML = '<i class="fas fa-pause"></i>';
-                        document.getElementById('playerPlayBtn').onclick = () => {
-                            if (liveAudio) {
-                                if (liveAudio.paused) {
-                                    liveAudio.play();
-                                    document.getElementById('playerPlayBtn').innerHTML = '<i class="fas fa-pause"></i>';
-                                } else {
-                                    liveAudio.pause();
-                                    document.getElementById('playerPlayBtn').innerHTML = '<i class="fas fa-play"></i>';
-                                }
-                            }
-                        };
-                    }
-
-                    // Очищаем старые URL
-                    setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-                } catch (e) {
-                    console.log('Ошибка декодирования чанка');
-                }
-            });
-
-            // Следим за статусом LIVE
-            db.ref('radio/live').on('value', (sn) => {
-                const live = sn.val();
-                if (!live || !live.active) {
-                    // LIVE закончился
-                    if (liveAudio) {
-                        liveAudio.pause();
-                        liveAudio = null;
-                    }
-                    const player = document.getElementById('player');
-                    if (player.classList.contains('active')) {
-                        // Не закрываем, если есть сохранённые сообщения
-                        const name = document.getElementById('playerName');
-                        if (name.textContent === '🎙️ LIVE ЭФИР') {
-                            player.classList.remove('active');
-                        }
-                    }
-                }
-            });
-        }
-
-        // === ВОСПРОИЗВЕДЕНИЕ СОХРАНЁННОГО ===
+        // ========== ВОСПРОИЗВЕДЕНИЕ СОХРАНЁННОГО ==========
         window.playMessage = async (msgId) => {
             try {
                 if (isPlaying && currentMsgId === msgId) {
@@ -833,7 +841,7 @@
                 currentAudio = new Audio(url);
 
                 currentAudio.onloadedmetadata = () => {
-                    document.getElementById('playerName').textContent = '📻 Сообщение';
+                    document.getElementById('playerName').textContent = '📻 ' + (data.userName || 'Сообщение');
                     document.getElementById('playerTime').textContent = '0:00 / ' + formatDuration(currentAudio.duration);
                 };
 
@@ -860,7 +868,7 @@
             }
         };
 
-        // === УПРАВЛЕНИЕ ПЛЕЕРОМ ===
+        // ========== УПРАВЛЕНИЕ ПЛЕЕРОМ ==========
         window.togglePlayerPlay = () => {
             if (!currentAudio) return;
             if (isPlaying) {
@@ -897,7 +905,7 @@
             document.getElementById('playerPlayBtn').innerHTML = '<i class="fas fa-play"></i>';
         }
 
-        // === ПРИ ОБНОВЛЕНИИ СТРАНИЦЫ ===
+        // ========== ПРИ ОБНОВЛЕНИИ СТРАНИЦЫ ==========
         window.addEventListener('beforeunload', () => {
             if (isRecording && mediaRecorder) {
                 mediaRecorder.stop();
@@ -905,26 +913,21 @@
             if (stream) {
                 stream.getTracks().forEach(t => t.stop());
             }
-            db.ref('radio/listeners/' + userId).remove();
+            if (liveListenerRef) {
+                liveListenerRef.remove();
+            }
             db.ref('radio/live').remove();
         });
 
-        // === ИНИЦИАЛИЗАЦИЯ ===
+        // ========== ИНИЦИАЛИЗАЦИЯ ==========
         updateListeners();
         loadHistory();
         listenLive();
 
-        // Обработка ошибок микрофона при первом клике
-        document.getElementById('mainBtn').addEventListener('click', async (e) => {
-            if (!isMicRequested) {
-                // Просто просим разрешение при первом клике
-                await requestMic();
-            }
-        });
-
         console.log('🎙️ WHOPPER RADIO LIVE');
         console.log('🆔 ID:', userId);
         console.log('📢 Нажмите ГОВОРИТЬ чтобы начать трансляцию');
+        console.log('🔑 Если микрофон не работает — разрешите доступ в браузере');
     </script>
 </body>
 </html>
