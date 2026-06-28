@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🎙️ WHOPPER RADIO • МГНОВЕННЫЙ ЭФИР</title>
+    <title>📻 WHOPPER RADIO • РАЦИЯ</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -16,181 +16,335 @@
         }
 
         body {
-            background: linear-gradient(135deg, #0a0a1a, #1a1a2e);
+            background: #1a1a2e;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
             color: white;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .container {
-            max-width: 500px;
+            max-width: 450px;
             width: 100%;
             text-align: center;
         }
 
+        /* ===== ВЕРХНЯЯ ЧАСТЬ ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 0 5px;
+        }
+
         .logo {
-            font-size: 3rem;
-            margin-bottom: 10px;
-        }
-
-        h1 {
-            font-size: 2rem;
+            font-size: 1.8rem;
             color: #f5a623;
-            margin-bottom: 5px;
         }
 
-        .sub {
-            color: #888;
-            font-size: 0.9rem;
-            margin-bottom: 30px;
+        .logo span {
+            font-size: 1rem;
+            font-weight: bold;
         }
 
-        .status {
+        .status-badge {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 25px;
-            padding: 12px;
+            gap: 8px;
+            font-size: 0.75rem;
+            padding: 6px 14px;
+            border-radius: 40px;
             background: rgba(255,255,255,0.05);
-            border-radius: 60px;
         }
 
-        .dot {
-            width: 14px;
-            height: 14px;
+        .status-dot {
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             display: inline-block;
-            transition: 0.3s;
-            flex-shrink: 0;
         }
 
-        .dot.offline {
+        .status-dot.offline {
             background: #444;
         }
-        .dot.online {
+        .status-dot.online {
             background: #4CAF50;
-            animation: pulse 1.5s infinite;
+            animation: pulse-dot 1.5s infinite;
         }
-        .dot.recording {
+        .status-dot.transmitting {
             background: #ff4444;
-            animation: pulse 0.5s infinite;
+            animation: pulse-dot 0.4s infinite;
         }
 
-        @keyframes pulse {
+        @keyframes pulse-dot {
             0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.7; }
+            50% { transform: scale(1.6); opacity: 0.6; }
             100% { transform: scale(1); opacity: 1; }
         }
 
-        .status-text {
-            font-size: 0.95rem;
-            color: #aaa;
-        }
-
-        .status-text strong {
-            color: #f5a623;
-        }
-
-        .btn-main {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            border: none;
-            font-size: 3rem;
-            cursor: pointer;
-            transition: 0.3s;
-            position: relative;
-            margin: 10px auto 30px;
+        /* ===== КАНАЛ ===== */
+        .channel-display {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .channel-label {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .channel-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #f5a623;
+            font-family: 'Courier New', monospace;
+        }
+
+        .channel-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .channel-btn {
+            background: rgba(255,255,255,0.08);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .channel-btn:active {
+            transform: scale(0.9);
+            background: rgba(245,166,35,0.3);
+        }
+
+        /* ===== КНОПКА PTT (Главная) ===== */
+        .ptt-container {
+            position: relative;
+            margin: 20px auto 25px;
+        }
+
+        .ptt-btn {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            border: 4px solid #444;
+            background: radial-gradient(circle at 30% 30%, #2d2d44, #1a1a2e);
+            color: #888;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.15s;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            flex-direction: column;
-            gap: 5px;
+            gap: 8px;
+            margin: 0 auto;
             box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            position: relative;
+            touch-action: none;
         }
 
-        .btn-main .label {
+        .ptt-btn .icon {
+            font-size: 3.5rem;
+            transition: 0.2s;
+        }
+
+        .ptt-btn .label {
             font-size: 0.9rem;
-            font-weight: 700;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
-        .btn-main.idle {
-            background: linear-gradient(145deg, #2d2d44, #1a1a2e);
-            color: #888;
-            border: 3px solid #444;
+        .ptt-btn .sub-label {
+            font-size: 0.6rem;
+            color: #666;
+            font-weight: normal;
         }
 
-        .btn-main.idle:hover {
-            border-color: #f5a623;
-            color: #f5a623;
-        }
-
-        .btn-main.idle:active {
+        .ptt-btn:active {
             transform: scale(0.95);
         }
 
-        .btn-main.recording {
-            background: linear-gradient(145deg, #ff4444, #cc0000);
+        /* Состояние: Нажата (передача) */
+        .ptt-btn.transmitting {
+            border-color: #ff4444;
+            background: radial-gradient(circle at 30% 30%, #ff4444, #cc0000);
             color: white;
-            border: 3px solid #ff6666;
-            animation: glow-red 1s infinite;
+            animation: transmit-pulse 0.8s infinite;
         }
 
-        @keyframes glow-red {
-            0% { box-shadow: 0 0 20px rgba(255,68,68,0.3); }
-            50% { box-shadow: 0 0 60px rgba(255,68,68,0.7); }
-            100% { box-shadow: 0 0 20px rgba(255,68,68,0.3); }
+        @keyframes transmit-pulse {
+            0% { box-shadow: 0 0 20px rgba(255,68,68,0.2); }
+            50% { box-shadow: 0 0 60px rgba(255,68,68,0.5); }
+            100% { box-shadow: 0 0 20px rgba(255,68,68,0.2); }
         }
 
-        .btn-main.recording:active {
-            transform: scale(0.95);
+        .ptt-btn.transmitting .icon {
+            animation: mic-pulse 0.5s infinite;
         }
 
-        .btn-main .waves {
+        @keyframes mic-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Волны вокруг кнопки при передаче */
+        .ptt-btn .waves-ring {
             display: none;
             position: absolute;
-            top: -10px;
-            left: -10px;
-            right: -10px;
-            bottom: -10px;
+            top: -12px;
+            left: -12px;
+            right: -12px;
+            bottom: -12px;
             border-radius: 50%;
-            border: 2px solid rgba(255,68,68,0.3);
-            animation: wave 1.5s infinite;
+            border: 2px solid rgba(255,68,68,0.15);
+            animation: wave-ring 1.2s infinite;
         }
 
-        .btn-main.recording .waves {
+        .ptt-btn.transmitting .waves-ring {
             display: block;
         }
 
-        .btn-main .waves:nth-child(2) {
-            animation-delay: 0.5s;
+        .ptt-btn .waves-ring:nth-child(2) {
+            animation-delay: 0.4s;
         }
-        .btn-main .waves:nth-child(3) {
-            animation-delay: 1s;
+        .ptt-btn .waves-ring:nth-child(3) {
+            animation-delay: 0.8s;
         }
 
-        @keyframes wave {
+        @keyframes wave-ring {
             0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
+            100% { transform: scale(1.3); opacity: 0; }
         }
 
-        .listeners {
-            color: #888;
-            font-size: 0.9rem;
-            margin-bottom: 25px;
+        /* ===== ИНФО ПАНЕЛЬ ===== */
+        .info-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
         }
 
-        .listeners span {
+        .info-item {
+            background: rgba(255,255,255,0.04);
+            border-radius: 16px;
+            padding: 12px 8px;
+            text-align: center;
+        }
+
+        .info-item .value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #f5a623;
+        }
+
+        .info-item .label {
+            font-size: 0.6rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+
+        /* ===== ПОСЛЕДНИЕ СООБЩЕНИЯ ===== */
+        .messages-title {
+            text-align: left;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .messages-list {
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            padding: 10px;
+        }
+
+        .messages-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        .messages-list::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.03);
+            border-radius: 4px;
+        }
+        .messages-list::-webkit-scrollbar-thumb {
+            background: #f5a623;
+            border-radius: 4px;
+        }
+
+        .msg-item {
+            padding: 8px 12px;
+            border-radius: 12px;
+            margin-bottom: 6px;
+            background: rgba(255,255,255,0.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .msg-item .msg-user {
             color: #f5a623;
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 0.75rem;
+            min-width: 60px;
         }
 
+        .msg-item .msg-time {
+            color: #555;
+            font-size: 0.65rem;
+            min-width: 40px;
+        }
+
+        .msg-item .msg-play {
+            background: none;
+            border: none;
+            color: #4CAF50;
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 2px 8px;
+        }
+
+        .msg-item .msg-play:active {
+            transform: scale(0.9);
+        }
+
+        .msg-empty {
+            text-align: center;
+            color: #444;
+            padding: 20px;
+            font-size: 0.85rem;
+        }
+
+        /* ===== ТОСТ ===== */
         .toast {
             position: fixed;
             top: 20px;
@@ -198,14 +352,14 @@
             transform: translateX(-50%);
             background: #333;
             color: white;
-            padding: 12px 25px;
+            padding: 10px 20px;
             border-radius: 40px;
             z-index: 100;
             opacity: 0;
             transition: 0.3s;
             pointer-events: none;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             max-width: 90%;
             text-align: center;
         }
@@ -217,116 +371,53 @@
         .toast.error { background: #ff4444; }
         .toast.info { background: #2196F3; }
 
-        .history {
-            margin-top: 25px;
-            max-height: 200px;
-            overflow-y: auto;
-            text-align: left;
-        }
-
-        .history::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .history::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.05);
-            border-radius: 4px;
-        }
-
-        .history::-webkit-scrollbar-thumb {
-            background: #f5a623;
-            border-radius: 4px;
-        }
-
-        .history-item {
-            background: rgba(255,255,255,0.04);
-            border-radius: 12px;
-            padding: 10px 15px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .history-item .h-user {
-            color: #f5a623;
-            font-weight: bold;
-            font-size: 0.8rem;
-            min-width: 60px;
-        }
-
-        .history-item .h-time {
-            color: #666;
-            font-size: 0.7rem;
-            min-width: 40px;
-        }
-
-        .history-item .h-duration {
-            color: #666;
-            font-size: 0.7rem;
-            min-width: 35px;
-        }
-
-        .history-item .h-play {
-            background: none;
-            border: none;
-            color: #4CAF50;
-            cursor: pointer;
-            font-size: 0.9rem;
-            margin-left: auto;
-            padding: 5px 10px;
-        }
-
-        .history-item .h-play:active {
-            transform: scale(0.9);
-        }
-
-        .empty-history {
-            text-align: center;
-            color: #444;
-            padding: 20px;
-            font-size: 0.9rem;
-        }
-
-        /* Индикатор активности LIVE */
-        .live-indicator {
-            display: none;
-            background: rgba(255,68,68,0.2);
-            border: 1px solid #ff4444;
-            border-radius: 60px;
-            padding: 5px 15px;
-            font-size: 0.7rem;
-            color: #ff4444;
-            margin: 10px auto;
-        }
-
-        .live-indicator.active {
-            display: inline-block;
-            animation: pulse-text 1s infinite;
-        }
-
-        @keyframes pulse-text {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
+        /* ===== АДАПТИВ ===== */
         @media (max-width: 500px) {
-            .btn-main {
-                width: 160px;
-                height: 160px;
+            .ptt-btn {
+                width: 180px;
+                height: 180px;
+            }
+            .ptt-btn .icon {
+                font-size: 2.8rem;
+            }
+            .header .logo {
+                font-size: 1.4rem;
+            }
+            .info-panel {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 6px;
+            }
+            .info-item .value {
+                font-size: 1rem;
+            }
+            .channel-number {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .ptt-btn {
+                width: 150px;
+                height: 150px;
+            }
+            .ptt-btn .icon {
                 font-size: 2.2rem;
             }
-            .btn-main .label {
+            .ptt-btn .label {
                 font-size: 0.7rem;
             }
-            h1 { font-size: 1.6rem; }
-            .history-item { padding: 8px 12px; }
+        }
+
+        /* ===== АНИМАЦИЯ ДЛЯ НОВЫХ СООБЩЕНИЙ ===== */
+        .msg-item.new {
+            background: rgba(245,166,35,0.15);
+            border-left: 3px solid #f5a623;
+        }
+
+        /* Отключение прокрутки страницы при удержании кнопки */
+        .no-scroll {
+            overflow: hidden;
+            touch-action: none;
         }
     </style>
 </head>
@@ -335,39 +426,78 @@
     <div id="toast" class="toast"></div>
 
     <div class="container">
-        <div class="logo">🎙️</div>
-        <h1>WHOPPER RADIO</h1>
-        <div class="sub">Мгновенный эфир • Говорите — все слышат сразу</div>
-
-        <div class="status">
-            <span class="dot offline" id="statusDot"></span>
-            <span class="status-text" id="statusText">
-                <strong>🔴</strong> Микрофон выключен
-            </span>
+        <!-- ШАПКА -->
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-radio"></i>
+                <span>РАЦИЯ</span>
+            </div>
+            <div class="status-badge">
+                <span class="status-dot offline" id="statusDot"></span>
+                <span id="statusText">Офлайн</span>
+            </div>
         </div>
 
-        <button class="btn-main idle" id="mainBtn" onclick="toggleRecording()">
-            <span class="waves"></span>
-            <span class="waves"></span>
-            <span class="waves"></span>
-            <i class="fas fa-microphone"></i>
-            <span class="label" id="btnLabel">ГОВОРИТЬ</span>
-        </button>
-
-        <div class="listeners">
-            👥 <span id="listenerCount">0</span> слушателей онлайн
+        <!-- КАНАЛ -->
+        <div class="channel-display">
+            <div>
+                <div class="channel-label">КАНАЛ</div>
+                <div class="channel-number" id="channelNumber">1</div>
+            </div>
+            <div class="channel-controls">
+                <button class="channel-btn" onclick="changeChannel(-1)"><i class="fas fa-minus"></i></button>
+                <button class="channel-btn" onclick="changeChannel(1)"><i class="fas fa-plus"></i></button>
+            </div>
         </div>
 
-        <div class="history" id="historyList">
-            <div class="empty-history">
-                <i class="fas fa-radio" style="font-size:1.5rem; display:block; margin-bottom:8px;"></i>
+        <!-- КНОПКА PTT -->
+        <div class="ptt-container">
+            <button class="ptt-btn idle" id="pttBtn"
+                    onmousedown="startTransmit()"
+                    onmouseup="stopTransmit()"
+                    onmouseleave="stopTransmit()"
+                    ontouchstart="startTransmit()"
+                    ontouchend="stopTransmit()"
+                    ontouchcancel="stopTransmit()">
+                <span class="waves-ring"></span>
+                <span class="waves-ring"></span>
+                <span class="waves-ring"></span>
+                <span class="icon"><i class="fas fa-microphone-alt"></i></span>
+                <span class="label" id="pttLabel">НАЖМИТЕ</span>
+                <span class="sub-label">Удерживайте для передачи</span>
+            </button>
+        </div>
+
+        <!-- ИНФО -->
+        <div class="info-panel">
+            <div class="info-item">
+                <div class="value" id="listenerCount">0</div>
+                <div class="label">Слушают</div>
+            </div>
+            <div class="info-item">
+                <div class="value" id="signalStrength">📶</div>
+                <div class="label">Сигнал</div>
+            </div>
+            <div class="info-item">
+                <div class="value" id="lastMsgTime">--:--</div>
+                <div class="label">Последний</div>
+            </div>
+        </div>
+
+        <!-- СООБЩЕНИЯ -->
+        <div class="messages-title">
+            <i class="fas fa-history"></i> История сообщений
+        </div>
+        <div class="messages-list" id="messagesList">
+            <div class="msg-empty">
+                <i class="fas fa-radio" style="display:block; font-size:1.5rem; margin-bottom:8px; color:#333;"></i>
                 Нет сообщений в эфире
             </div>
         </div>
     </div>
 
     <script>
-        // ========== FIREBASE КОНФИГ ==========
+        // ========== FIREBASE ==========
         const firebaseConfig = {
             apiKey: "AIzaSyBlZ5ZtyTXgtXxSJAx1jOxwhTrzlHRJmo",
             authDomain: "bk-cashier.firebaseapp.com",
@@ -383,13 +513,12 @@
 
         // ========== ПЕРЕМЕННЫЕ ==========
         const userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 4);
-
-        let isRecording = false;
+        let channel = 1;
+        let isTransmitting = false;
         let isMicReady = false;
         let stream = null;
         let peerConnection = null;
         let audioSender = null;
-
         let liveListenerRef = null;
         let isReceiving = false;
 
@@ -400,15 +529,15 @@
             t.className = 'toast ' + type;
             t.classList.add('show');
             clearTimeout(t._timeout);
-            t._timeout = setTimeout(() => t.classList.remove('show'), 2500);
+            t._timeout = setTimeout(() => t.classList.remove('show'), 2000);
         }
 
-        // ========== ОБНОВЛЕНИЕ СТАТУСА ==========
+        // ========== СТАТУС ==========
         function setStatus(state, text) {
             const dot = document.getElementById('statusDot');
             const statusText = document.getElementById('statusText');
-            dot.className = 'dot ' + state;
-            statusText.innerHTML = text;
+            dot.className = 'status-dot ' + state;
+            statusText.textContent = text;
         }
 
         // ========== ЗАПРОС МИКРОФОНА ==========
@@ -420,22 +549,21 @@
                     audio: {
                         echoCancellation: true,
                         noiseSuppression: true,
-                        autoGainControl: true,
-                        sampleRate: 48000
+                        autoGainControl: true
                     }
                 });
 
                 isMicReady = true;
-                showToast('✅ Микрофон подключён!', 'success');
+                showToast('✅ Микрофон готов', 'success');
                 return true;
 
             } catch (err) {
                 console.error('Ошибка доступа к микрофону:', err);
 
                 if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    showToast('❌ Разрешение на микрофон отклонено. Разрешите доступ в браузере.', 'error');
-                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                    showToast('❌ Микрофон не найден. Подключите микрофон.', 'error');
+                    showToast('❌ Разрешите доступ к микрофону в браузере', 'error');
+                } else if (err.name === 'NotFoundError') {
+                    showToast('❌ Микрофон не найден', 'error');
                 } else {
                     showToast('❌ Ошибка: ' + err.message, 'error');
                 }
@@ -444,30 +572,70 @@
             }
         }
 
-        // ========== ТОГГЛ ЗАПИСИ ==========
-        window.toggleRecording = async () => {
-            if (isRecording) {
-                stopRecording();
-                return;
-            }
+        // ========== НАЧАТЬ ПЕРЕДАЧУ (PTT) ==========
+        window.startTransmit = async function() {
+            if (isTransmitting) return;
 
             if (!isMicReady) {
                 const ok = await requestMicrophone();
                 if (!ok) return;
             }
 
-            startRecording();
+            // Запускаем трансляцию
+            isTransmitting = true;
+
+            // Обновляем кнопку
+            const btn = document.getElementById('pttBtn');
+            btn.className = 'ptt-btn transmitting';
+            document.getElementById('pttLabel').textContent = 'ГОВОРИТЕ';
+            document.querySelector('.ptt-btn .sub-label').textContent = '🔴 В эфире...';
+
+            setStatus('transmitting', 'Передача');
+
+            // Запускаем WebRTC трансляцию
+            startBroadcasting();
+
+            // Вибрация (если есть)
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+
+            showToast('🔴 Передача начата', 'info');
         };
 
-        // ========== НАЧАТЬ ЗАПИСЬ (WebRTC) ==========
-        function startRecording() {
+        // ========== ОСТАНОВИТЬ ПЕРЕДАЧУ ==========
+        window.stopTransmit = function() {
+            if (!isTransmitting) return;
+
+            isTransmitting = false;
+
+            // Обновляем кнопку
+            const btn = document.getElementById('pttBtn');
+            btn.className = 'ptt-btn idle';
+            document.getElementById('pttLabel').textContent = 'НАЖМИТЕ';
+            document.querySelector('.ptt-btn .sub-label').textContent = 'Удерживайте для передачи';
+
+            setStatus('online', 'Онлайн');
+
+            // Останавливаем трансляцию
+            stopBroadcasting();
+
+            if (navigator.vibrate) {
+                navigator.vibrate(30);
+            }
+
+            showToast('⏹️ Передача завершена', 'info');
+        };
+
+        // ========== НАЧАТЬ ТРАНСЛЯЦИЮ (WebRTC) ==========
+        function startBroadcasting() {
             try {
                 if (!stream) {
                     showToast('❌ Микрофон не готов', 'error');
                     return;
                 }
 
-                // Создаём WebRTC соединение
+                // Создаём WebRTC
                 const configuration = {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
@@ -477,16 +645,15 @@
 
                 peerConnection = new RTCPeerConnection(configuration);
 
-                // Добавляем аудио-трек
+                // Добавляем аудио
                 const audioTrack = stream.getAudioTracks()[0];
                 if (audioTrack) {
                     audioSender = peerConnection.addTrack(audioTrack, stream);
                 }
 
-                // Обработка ICE-кандидатов
                 peerConnection.onicecandidate = (event) => {
                     if (event.candidate) {
-                        db.ref('radio/webrtc/signaling/' + userId + '/candidate').set({
+                        db.ref('radio/channels/' + channel + '/broadcasters/' + userId + '/candidate').set({
                             candidate: event.candidate,
                             timestamp: Date.now()
                         });
@@ -495,99 +662,66 @@
 
                 // Создаём offer
                 peerConnection.createOffer()
-                    .then(offer => {
-                        return peerConnection.setLocalDescription(offer);
-                    })
+                    .then(offer => peerConnection.setLocalDescription(offer))
                     .then(() => {
-                        // Отправляем offer в Firebase
-                        db.ref('radio/webrtc/signaling/' + userId).set({
+                        db.ref('radio/channels/' + channel + '/broadcasters/' + userId).set({
                             type: 'offer',
                             sdp: peerConnection.localDescription,
                             timestamp: Date.now(),
                             active: true
                         });
-                        db.ref('radio/webrtc/signaling/' + userId).onDisconnect().remove();
+                        db.ref('radio/channels/' + channel + '/broadcasters/' + userId).onDisconnect().remove();
+
+                        // Отмечаем что вещаем
+                        db.ref('radio/channels/' + channel + '/active').set({
+                            userId: userId,
+                            startedAt: Date.now()
+                        });
                     })
                     .catch(err => {
-                        console.error('Ошибка создания offer:', err);
-                        showToast('❌ Ошибка запуска эфира', 'error');
+                        console.error('Ошибка offer:', err);
+                        showToast('❌ Ошибка трансляции', 'error');
+                        stopTransmit();
                     });
 
-                // Слушаем ответы от слушателей
-                db.ref('radio/webrtc/signaling/' + userId + '/answer').on('value', (sn) => {
+                // Слушаем ответы
+                db.ref('radio/channels/' + channel + '/broadcasters/' + userId + '/answers').on('value', (sn) => {
                     const data = sn.val();
                     if (data && data.sdp && peerConnection) {
-                        const answer = new RTCSessionDescription(data.sdp);
-                        peerConnection.setRemoteDescription(answer)
-                            .then(() => {
-                                console.log('✅ Соединение установлено со слушателем');
-                            })
-                            .catch(err => console.error('Ошибка установки ответа:', err));
+                        peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp))
+                            .catch(err => console.error('Ошибка answer:', err));
                     }
                 });
 
-                // Слушаем кандидаты от слушателей
-                db.ref('radio/webrtc/signaling/' + userId + '/candidate').on('child_added', (sn) => {
+                // Слушаем кандидаты
+                db.ref('radio/channels/' + channel + '/broadcasters/' + userId + '/candidate').on('child_added', (sn) => {
                     const data = sn.val();
                     if (data && data.candidate && peerConnection) {
                         peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
-                            .catch(err => console.error('Ошибка добавления кандидата:', err));
+                            .catch(err => console.error('Ошибка кандидата:', err));
                     }
                 });
 
-                isRecording = true;
-
-                // Обновляем UI
-                const btn = document.getElementById('mainBtn');
-                btn.className = 'btn-main recording';
-                document.getElementById('btnLabel').textContent = 'СТОП';
-                setStatus('recording', '<strong>🔴 LIVE</strong> Идёт трансляция...');
-
-                // Отмечаем в Firebase что идёт LIVE
-                db.ref('radio/live').set({
-                    active: true,
-                    startedAt: Date.now(),
-                    userId: userId,
-                    userName: 'Ведущий',
-                    type: 'webrtc'
-                });
-                db.ref('radio/live').onDisconnect().remove();
-
-                showToast('🔴 Эфир начался!', 'info');
-
             } catch (err) {
-                console.error('Ошибка записи:', err);
-                showToast('❌ Ошибка запуска: ' + err.message, 'error');
+                console.error('Ошибка вещания:', err);
+                showToast('❌ Ошибка: ' + err.message, 'error');
+                stopTransmit();
             }
         }
 
-        // ========== ОСТАНОВИТЬ ЗАПИСЬ ==========
-        function stopRecording() {
-            if (!isRecording) return;
-
-            isRecording = false;
-
-            // Закрываем WebRTC
+        // ========== ОСТАНОВИТЬ ТРАНСЛЯЦИЮ ==========
+        function stopBroadcasting() {
             if (peerConnection) {
                 peerConnection.close();
                 peerConnection = null;
                 audioSender = null;
             }
 
-            // Очищаем сигналинг
-            db.ref('radio/webrtc/signaling/' + userId).remove();
-            db.ref('radio/live').remove();
-
-            // Обновляем UI
-            const btn = document.getElementById('mainBtn');
-            btn.className = 'btn-main idle';
-            document.getElementById('btnLabel').textContent = 'ГОВОРИТЬ';
-            setStatus('offline', '<strong>🔴</strong> Микрофон выключен');
-
-            showToast('⏹️ Эфир завершён', 'info');
+            db.ref('radio/channels/' + channel + '/broadcasters/' + userId).remove();
+            db.ref('radio/channels/' + channel + '/active').remove();
         }
 
-        // ========== ПРИЁМ ЭФИРА (WebRTC) ==========
+        // ========== ПРИЁМ ЭФИРА ==========
         function startReceiving(broadcasterId) {
             if (isReceiving) return;
 
@@ -601,42 +735,35 @@
 
                 const pc = new RTCPeerConnection(configuration);
 
-                // Обработка ICE-кандидатов
                 pc.onicecandidate = (event) => {
                     if (event.candidate) {
-                        db.ref('radio/webrtc/signaling/' + broadcasterId + '/candidate').set({
+                        db.ref('radio/channels/' + channel + '/broadcasters/' + broadcasterId + '/candidate').set({
                             candidate: event.candidate,
                             timestamp: Date.now()
                         });
                     }
                 };
 
-                // Когда приходит аудио-трек
                 pc.ontrack = (event) => {
                     if (event.track.kind === 'audio') {
                         const audio = new Audio();
                         audio.srcObject = new MediaStream([event.track]);
                         audio.play().catch(() => {});
                         isReceiving = true;
-                        showToast('🎧 Подключено к эфиру!', 'success');
+                        // Показываем что приняли сигнал
+                        document.getElementById('signalStrength').textContent = '📶📶📶';
                     }
                 };
 
-                // Получаем offer от ведущего
-                db.ref('radio/webrtc/signaling/' + broadcasterId).on('value', (sn) => {
+                // Получаем offer
+                db.ref('radio/channels/' + channel + '/broadcasters/' + broadcasterId).on('value', (sn) => {
                     const data = sn.val();
                     if (data && data.type === 'offer' && data.sdp) {
-                        const offer = new RTCSessionDescription(data.sdp);
-                        pc.setRemoteDescription(offer)
+                        pc.setRemoteDescription(new RTCSessionDescription(data.sdp))
+                            .then(() => pc.createAnswer())
+                            .then(answer => pc.setLocalDescription(answer))
                             .then(() => {
-                                return pc.createAnswer();
-                            })
-                            .then(answer => {
-                                return pc.setLocalDescription(answer);
-                            })
-                            .then(() => {
-                                // Отправляем ответ
-                                db.ref('radio/webrtc/signaling/' + broadcasterId + '/answer').set({
+                                db.ref('radio/channels/' + channel + '/broadcasters/' + broadcasterId + '/answers').set({
                                     sdp: pc.localDescription,
                                     timestamp: Date.now()
                                 });
@@ -645,8 +772,7 @@
                     }
                 });
 
-                // Получаем кандидаты
-                db.ref('radio/webrtc/signaling/' + broadcasterId + '/candidate').on('child_added', (sn) => {
+                db.ref('radio/channels/' + channel + '/broadcasters/' + broadcasterId + '/candidate').on('child_added', (sn) => {
                     const data = sn.val();
                     if (data && data.candidate) {
                         pc.addIceCandidate(new RTCIceCandidate(data.candidate))
@@ -654,14 +780,55 @@
                     }
                 });
 
-                // Сохраняем для очистки
                 window._receiverPC = pc;
                 window._receiverBroadcaster = broadcasterId;
 
             } catch (err) {
-                console.error('Ошибка подключения к эфиру:', err);
+                console.error('Ошибка подключения:', err);
             }
         }
+
+        // ========== СЛЕЖЕНИЕ ЗА КАНАЛОМ ==========
+        function watchChannel() {
+            db.ref('radio/channels/' + channel + '/active').on('value', (sn) => {
+                const active = sn.val();
+
+                // Очищаем старые соединения
+                if (window._receiverPC) {
+                    window._receiverPC.close();
+                    window._receiverPC = null;
+                    isReceiving = false;
+                    document.getElementById('signalStrength').textContent = '📶';
+                }
+
+                // Если есть активный вещатель
+                if (active && active.userId && active.userId !== userId) {
+                    startReceiving(active.userId);
+                }
+            });
+        }
+
+        // ========== СМЕНА КАНАЛА ==========
+        window.changeChannel = function(delta) {
+            channel = Math.max(1, Math.min(20, channel + delta));
+            document.getElementById('channelNumber').textContent = channel;
+
+            // Переподключаемся к каналу
+            if (window._receiverPC) {
+                window._receiverPC.close();
+                window._receiverPC = null;
+                isReceiving = false;
+                document.getElementById('signalStrength').textContent = '📶';
+            }
+
+            // Если мы ведём трансляцию — останавливаем
+            if (isTransmitting) {
+                stopTransmit();
+            }
+
+            watchChannel();
+            showToast('📻 Канал ' + channel, 'info');
+        };
 
         // ========== СЧЁТЧИК СЛУШАТЕЛЕЙ ==========
         function updateListeners() {
@@ -673,6 +840,7 @@
             ref.set({
                 online: true,
                 lastSeen: Date.now(),
+                channel: channel,
                 isBroadcaster: false
             });
             ref.onDisconnect().remove();
@@ -684,48 +852,22 @@
             });
         }
 
-        // ========== СЛЕЖЕНИЕ ЗА LIVE ЭФИРОМ ==========
-        function watchLive() {
-            db.ref('radio/live').on('value', (sn) => {
-                const live = sn.val();
-
-                if (live && live.active && live.type === 'webrtc') {
-                    // Если эфир идёт и это WebRTC
-                    if (live.userId !== userId) {
-                        // Подключаемся к эфиру ведущего
-                        startReceiving(live.userId);
-                    }
-                } else {
-                    // Эфир закончился
-                    if (window._receiverPC) {
-                        window._receiverPC.close();
-                        window._receiverPC = null;
-                        isReceiving = false;
-                    }
-                    // Очищаем сигналинг
-                    if (window._receiverBroadcaster) {
-                        db.ref('radio/webrtc/signaling/' + window._receiverBroadcaster + '/answer').remove();
-                    }
-                }
-            });
-        }
-
         // ========== ЗАГРУЗКА ИСТОРИИ ==========
         function loadHistory() {
-            db.ref('radio/messages').orderByChild('timestamp').limitToLast(50).on('value', (sn) => {
+            db.ref('radio/messages').orderByChild('timestamp').limitToLast(20).on('value', (sn) => {
                 const items = [];
                 sn.forEach(child => items.push({ id: child.key, ...child.val() }));
-                renderHistory(items.reverse());
+                renderMessages(items.reverse());
             });
         }
 
-        function renderHistory(items) {
-            const container = document.getElementById('historyList');
+        function renderMessages(items) {
+            const container = document.getElementById('messagesList');
 
             if (items.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-history">
-                        <i class="fas fa-radio" style="font-size:1.5rem; display:block; margin-bottom:8px;"></i>
+                    <div class="msg-empty">
+                        <i class="fas fa-radio" style="display:block; font-size:1.5rem; margin-bottom:8px; color:#333;"></i>
                         Нет сообщений в эфире
                     </div>
                 `;
@@ -733,15 +875,19 @@
             }
 
             container.innerHTML = items.map(msg => `
-                <div class="history-item" data-id="${msg.id}">
-                    <span class="h-user"><i class="fas fa-user"></i> ${msg.userName || 'Кто-то'}</span>
-                    <span class="h-time">${formatTime(msg.timestamp)}</span>
-                    <span class="h-duration">${msg.duration ? formatDuration(msg.duration) : '0:00'}</span>
-                    <button class="h-play" onclick="playMessage('${msg.id}')">
+                <div class="msg-item">
+                    <span class="msg-user"><i class="fas fa-user"></i> ${msg.userName || 'Кто-то'}</span>
+                    <span class="msg-time">${formatTime(msg.timestamp)}</span>
+                    <button class="msg-play" onclick="playMessage('${msg.id}')">
                         <i class="fas fa-play"></i>
                     </button>
                 </div>
             `).join('');
+
+            // Обновляем время последнего сообщения
+            if (items.length > 0) {
+                document.getElementById('lastMsgTime').textContent = formatTime(items[0].timestamp);
+            }
         }
 
         function formatTime(ts) {
@@ -750,21 +896,15 @@
             return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
         }
 
-        function formatDuration(sec) {
-            const m = Math.floor(sec / 60);
-            const s = Math.floor(sec % 60);
-            return m + ':' + (s < 10 ? '0' : '') + s;
-        }
-
-        // ========== ВОСПРОИЗВЕДЕНИЕ СОХРАНЁННОГО ==========
+        // ========== ВОСПРОИЗВЕДЕНИЕ СООБЩЕНИЯ ==========
         window.playMessage = (msgId) => {
-            showToast('📻 Сохранённые записи временно недоступны в WebRTC режиме', 'info');
+            showToast('📻 Сохранённые записи в разработке', 'info');
         };
 
-        // ========== ПРИ ОБНОВЛЕНИИ ==========
+        // ========== ПРИ ЗАКРЫТИИ ==========
         window.addEventListener('beforeunload', () => {
-            if (isRecording) {
-                stopRecording();
+            if (isTransmitting) {
+                stopBroadcasting();
             }
             if (stream) {
                 stream.getTracks().forEach(t => t.stop());
@@ -772,23 +912,26 @@
             if (liveListenerRef) {
                 liveListenerRef.remove();
             }
-            db.ref('radio/live').remove();
-            db.ref('radio/webrtc/signaling/' + userId).remove();
-
             if (window._receiverPC) {
                 window._receiverPC.close();
             }
+            db.ref('radio/channels/' + channel + '/broadcasters/' + userId).remove();
+            db.ref('radio/channels/' + channel + '/active').remove();
+            db.ref('radio/listeners/' + userId).remove();
         });
 
-        // ========== ИНИЦИАЛИЗАЦИЯ ==========
+        // ========== ЗАПУСК ==========
+        setStatus('online', 'Онлайн');
         updateListeners();
         loadHistory();
-        watchLive();
+        watchChannel();
 
-        console.log('🎙️ WHOPPER RADIO • МГНОВЕННЫЙ ЭФИР (WebRTC)');
+        // Проверка поддержки
+        console.log('📻 WHOPPER РАЦИЯ');
         console.log('🆔 ID:', userId);
-        console.log('📢 Нажмите ГОВОРИТЬ чтобы начать трансляцию');
-        console.log('⚡ Звук передаётся мгновенно через WebRTC');
+        console.log('📡 Канал:', channel);
+        console.log('🔴 Нажмите и удерживайте кнопку для передачи');
+        console.log('🎤 Работает как настоящая рация!');
     </script>
 </body>
 </html>
