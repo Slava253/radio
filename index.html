@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🎙️ WHOPPER RADIO</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* ШАПКА */
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #f5a623;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header .sub {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.offline {
+            background: #ff4444;
+        }
+        .status-indicator.online {
+            background: #4CAF50;
+            animation: pulse 1s infinite;
+        }
+        .status-indicator.recording {
+            background: #ff4444;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* КНОПКИ УПРАВЛЕНИЯ */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 18px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-record {
+            background: #ff4444;
+            color: white;
+            box-shadow: 0 4px 20px rgba(255,68,68,0.3);
+        }
+
+        .btn-record:hover {
+            background: #ff6666;
+        }
+
+        .btn-record.recording {
+            background: #cc0000;
+            animation: glow 1s infinite;
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 4px 20px rgba(255,68,68,0.3); }
+            50% { box-shadow: 0 4px 40px rgba(255,68,68,0.8); }
+            100% { box-shadow: 0 4px 20px rgba(255,68,68,0.3); }
+        }
+
+        .btn-stop {
+            background: #f5a623;
+            color: #1a1a2e;
+            box-shadow: 0 4px 20px rgba(245,166,35,0.3);
+        }
+
+        .btn-stop:hover {
+            background: #ffc107;
+        }
+
+        .btn-play {
+            background: #4CAF50;
+            color: white;
+            box-shadow: 0 4px 20px rgba(76,175,80,0.3);
+        }
+
+        .btn-play:hover {
+            background: #66bb6a;
+        }
+
+        .btn-play.playing {
+            background: #ff9800;
+        }
+
+        .btn-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .btn-clear {
+            background: transparent;
+            color: #888;
+            border: 2px solid #444;
+            padding: 12px 25px;
+            font-size: 0.9rem;
+        }
+
+        .btn-clear:hover {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+
+        /* СОСТОЯНИЕ */
+        .state-info {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            color: #aaa;
+        }
+
+        .state-info strong {
+            color: #f5a623;
+        }
+
+        .state-info .recording-text {
+            color: #ff4444;
+            font-weight: bold;
+            display: none;
+        }
+
+        .state-info .recording-text.active {
+            display: inline;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        /* СПИСОК СООБЩЕНИЙ */
+        .messages {
+            background: rgba(255,255,255,0.05);
+            border-radius: 30px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: #f5a623;
+            border-radius: 10px;
+        }
+
+        .message-item {
+            background: rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: 0.2s;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-item:hover {
+            background: rgba(255,255,255,0.12);
+        }
+
+        .message-meta {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .message-user {
+            font-weight: bold;
+            color: #f5a623;
+            font-size: 0.9rem;
+        }
+
+        .message-time {
+            color: #888;
+            font-size: 0.75rem;
+            margin-left: 10px;
+        }
+
+        .message-duration {
+            color: #aaa;
+            font-size: 0.8rem;
+        }
+
+        .message-play-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+
+        .message-play-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .message-play-btn.playing {
+            background: #ff9800;
+        }
+
+        .message-play-btn:active {
+            transform: scale(0.95);
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #555;
+            padding: 40px;
+            font-size: 1.1rem;
+        }
+
+        .empty-message i {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        /* ПЛЕЕР */
+        .player {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1a1a2e;
+            border-top: 2px solid #f5a623;
+            padding: 15px 20px;
+            z-index: 100;
+        }
+
+        .player.active {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .player .playback-btn {
+            background: #f5a623;
+            border: none;
+            color: #1a1a2e;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+
+        .player .playback-info {
+            flex: 1;
+        }
+
+        .player .playback-name {
+            font-weight: bold;
+            color: #f5a623;
+        }
+
+        .player .playback-time {
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        .player .playback-progress {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 4px;
+            margin-top: 5px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .player .playback-progress .bar {
+            height: 100%;
+            background: #f5a623;
+            border-radius: 4px;
+            width: 0%;
+            transition: 0.1s;
+        }
+
+        .player .close-player {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+
+        /* ТОСТ */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 40px;
+            z-index: 200;
+            opacity: 0;
+            transition: 0.3s;
+            pointer-events: none;
+            font-weight: 600;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast.success { background: #4CAF50; }
+        .toast.error { background: #ff4444; }
+        .toast.info { background: #2196F3; }
+
+        /* АДАПТИВ */
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.8rem; }
+            .btn { padding: 14px 25px; font-size: 1rem; min-width: 140px; }
+            .message-item { flex-wrap: wrap; }
+            .message-play-btn { width: 40px; height: 40px; font-size: 0.9rem; }
+            .controls { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast" class="toast"></div>
+
+    <div class="container">
+        <!-- ШАПКА -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-microphone-alt"></i>
+                WHOPPER RADIO
+                <span class="status-indicator offline" id="statusDot"></span>
+            </h1>
+            <div class="sub">
+                <i class="fas fa-users"></i>
+                <span id="listenersCount">0</span> слушателей онлайн
+            </div>
+        </div>
+
+        <!-- УПРАВЛЕНИЕ -->
+        <div class="controls">
+            <button class="btn btn-record" id="recordBtn" onclick="startRecording()">
+                <i class="fas fa-microphone"></i>
+                <span id="recordBtnText">ГОВОРИТЬ</span>
+            </button>
+            <button class="btn btn-stop" id="stopBtn" onclick="stopRecording()" style="display:none;">
+                <i class="fas fa-stop-circle"></i>
+                СТОП
+            </button>
+            <button class="btn btn-clear" onclick="clearAllMessages()">
+                <i class="fas fa-trash-alt"></i>
+                ОЧИСТИТЬ
+            </button>
+        </div>
+
+        <!-- СОСТОЯНИЕ -->
+        <div class="state-info" id="stateInfo">
+            <span id="stateText">🔴 Микрофон выключен</span>
+            <span class="recording-text" id="recordingText">⏺ ЗАПИСЬ...</span>
+        </div>
+
+        <!-- СООБЩЕНИЯ -->
+        <div class="messages" id="messagesList">
+            <div class="empty-message">
+                <i class="fas fa-radio"></i>
+                Нет сообщений<br>
+                <span style="font-size:0.8rem; color:#444;">Нажмите «Говорить» чтобы начать</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ПЛЕЕР -->
+    <div class="player" id="player">
+        <button class="playback-btn" id="playerPlayBtn" onclick="togglePlayerPlay()">
+            <i class="fas fa-play"></i>
+        </button>
+        <div class="playback-info">
+            <div class="playback-name" id="playerName">Сообщение</div>
+            <div class="playback-time" id="playerTime">0:00 / 0:00</div>
+            <div class="playback-progress" onclick="seekPlayer(event)">
+                <div class="bar" id="playerProgress"></div>
+            </div>
+        </div>
+        <button class="close-player" onclick="closePlayer()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBlZ5ZtyTXgtXxSJAx1jOxwhTrzlHRJmo",
+            authDomain: "bk-cashier.firebaseapp.com",
+            databaseURL: "https://bk-cashier-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "bk-cashier",
+            storageBucket: "bk-cashier.firebasestorage.app",
+            messagingSenderId: "385000840969",
+            appId: "1:385000840969:web:1ec8d09176b6551dc0fdd8"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const storage = firebase.storage();
+
+        // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let isPlaying = false;
+        let currentAudio = null;
+        let currentMessageId = null;
+        let stream = null;
+        let userId = 'user_' + Math.random().toString(36).substr(2, 6);
+
+        // ПОКАЗАТЬ ТОСТ
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            toast.classList.add('show');
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // СТАТУС ОНЛАЙН
+        function updateStatus(status) {
+            const dot = document.getElementById('statusDot');
+            dot.className = 'status-indicator ' + status;
+        }
+
+        // ЗАГРУЗКА СООБЩЕНИЙ
+        function loadMessages() {
+            db.ref('radio/messages').orderByChild('timestamp').on('value', (snapshot) => {
+                const messages = [];
+                snapshot.forEach((child) => {
+                    messages.push({ id: child.key, ...child.val() });
+                });
+                renderMessages(messages.reverse());
+                updateListeners();
+            });
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('messagesList');
+
+            if (messages.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-message">
+                        <i class="fas fa-radio"></i>
+                        Нет сообщений<br>
+                        <span style="font-size:0.8rem; color:#444;">Нажмите «Говорить» чтобы начать</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = messages.map(msg => `
+                <div class="message-item" data-id="${msg.id}">
+                    <div class="message-meta">
+                        <span class="message-user">
+                            <i class="fas fa-user"></i> ${msg.userName || 'Кто-то'}
+                        </span>
+                        <span class="message-time">${formatTime(msg.timestamp)}</span>
+                        <br>
+                        <span class="message-duration">
+                            <i class="fas fa-clock"></i> ${msg.duration ? formatDuration(msg.duration) : '0:00'}
+                        </span>
+                        ${msg.isLive ? ' <span style="color:#ff4444; font-size:0.7rem;">🔴 LIVE</span>' : ''}
+                    </div>
+                    <button class="message-play-btn" onclick="playMessage('${msg.id}')">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return 'только что';
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDuration(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return m + ':' + (s < 10 ? '0' : '') + s;
+        }
+
+        function updateListeners() {
+            const ref = db.ref('radio/listeners/' + userId);
+            ref.set({ online: true, lastSeen: Date.now() });
+            ref.onDisconnect().remove();
+
+            db.ref('radio/listeners').on('value', (snapshot) => {
+                const count = snapshot.numChildren();
+                document.getElementById('listenersCount').textContent = count;
+            });
+        }
+
+        // НАЧАТЬ ЗАПИСЬ
+        window.startRecording = async () => {
+            try {
+                if (isRecording) return;
+
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    await uploadAudio(audioBlob);
+                    if (stream) {
+                        stream.getTracks().forEach(track => track.stop());
+                        stream = null;
+                    }
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+
+                // Обновление UI
+                document.getElementById('recordBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'flex';
+                document.getElementById('stateText').textContent = '🎙️ Идёт запись...';
+                document.getElementById('recordingText').classList.add('active');
+                updateStatus('recording');
+                showToast('🎙️ Запись началась...', 'info');
+
+            } catch (err) {
+                console.error('Ошибка доступа к микрофону:', err);
+                showToast('❌ Нет доступа к микрофону!', 'error');
+            }
+        };
+
+        // ОСТАНОВИТЬ ЗАПИСЬ
+        window.stopRecording = () => {
+            if (!isRecording || !mediaRecorder) return;
+
+            mediaRecorder.stop();
+            isRecording = false;
+
+            // Обновление UI
+            document.getElementById('recordBtn').style.display = 'flex';
+            document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('stateText').textContent = '⏳ Обработка записи...';
+            document.getElementById('recordingText').classList.remove('active');
+            updateStatus('online');
+
+            showToast('⏳ Сохранение записи...', 'info');
+        };
+
+        // ЗАГРУЗКА АУДИО В FIREBASE
+        async function uploadAudio(audioBlob) {
+            const messageId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+            const storageRef = storage.ref('radio/audio/' + messageId + '.webm');
+
+            try {
+                // Сначала сохраняем метаданные
+                const duration = await getAudioDuration(audioBlob);
+
+                const metadata = {
+                    contentType: 'audio/webm',
+                    customMetadata: {
+                        duration: duration.toString(),
+                        userName: 'Пользователь',
+                        timestamp: Date.now().toString()
+                    }
+                };
+
+                await storageRef.put(audioBlob, metadata);
+
+                // Сохраняем в базу
+                await db.ref('radio/messages/' + messageId).set({
+                    id: messageId,
+                    userName: 'Пользователь',
+                    timestamp: Date.now(),
+                    duration: duration,
+                    isLive: false
+                });
+
+                showToast('✅ Сообщение сохранено!', 'success');
+                document.getElementById('stateText').textContent = '✅ Готово';
+
+                // Сбрасываем UI
+                setTimeout(() => {
+                    document.getElementById('stateText').textContent = '🔴 Микрофон выключен';
+                    updateStatus('offline');
+                }, 2000);
+
+            } catch (err) {
+                console.error('Ошибка загрузки:', err);
+                showToast('❌ Ошибка сохранения', 'error');
+                document.getElementById('stateText').textContent = '❌ Ошибка';
+            }
+        }
+
+        // ПОЛУЧИТЬ ДЛИТЕЛЬНОСТЬ АУДИО
+        function getAudioDuration(blob) {
+            return new Promise((resolve) => {
+                const audio = new Audio();
+                const url = URL.createObjectURL(blob);
+                audio.src = url;
+                audio.onloadedmetadata = () => {
+                    resolve(audio.duration);
+                    URL.revokeObjectURL(url);
+                };
+                audio.onerror = () => resolve(0);
+            });
+        }
+
+        // ВОСПРОИЗВЕДЕНИЕ СООБЩЕНИЯ
+        window.playMessage = async (messageId) => {
+            try {
+                // Если уже играет это же сообщение
+                if (isPlaying && currentMessageId === messageId) {
+                    togglePlayerPlay();
+                    return;
+                }
+
+                // Если играет другое, останавливаем
+                if (isPlaying) {
+                    stopAudio();
+                }
+
+                const url = await storage.ref('radio/audio/' + messageId + '.webm').getDownloadURL();
+
+                // Получаем данные сообщения
+                const snapshot = await db.ref('radio/messages/' + messageId).once('value');
+                const data = snapshot.val();
+
+                currentMessageId = messageId;
+                currentAudio = new Audio(url);
+
+                currentAudio.onloadedmetadata = () => {
+                    document.getElementById('playerName').textContent = 'Сообщение #' + messageId.slice(0, 8);
+                    document.getElementById('playerTime').textContent = '0:00 / ' + formatDuration(currentAudio.duration);
+                };
+
+                currentAudio.ontimeupdate = () => {
+                    const progress = (currentAudio.currentTime / currentAudio.duration) * 100;
+                    document.getElementById('playerProgress').style.width = progress + '%';
+                    document.getElementById('playerTime').textContent =
+                        formatDuration(currentAudio.currentTime) + ' / ' + formatDuration(currentAudio.duration);
+                };
+
+                currentAudio.onended = () => {
+                    stopAudio();
+                    document.getElementById('playerPlayBtn').innerHTML = '<i class="fas fa-play"></i>';
+                    closePlayer();
+                };
+
+                document.getElementById('player').classList.add('active');
+                document.getElementById('playerPlayBtn').innerHTML = '<i class="fas fa-pause"></i>';
+
+                currentAudio.play();
+                isPlaying = true;
+
+                // Меняем кнопку в списке
+                document.querySelectorAll('.message-play-btn').forEach(btn => {
+                    btn.classList.remove('playing');
+                    btn.innerHTML = '<i class="fas fa-play"></i>';
+                });
+                const activeBtn = document.querySelector(`.message-item[data-id="${messageId}"] .message-play-btn`);
+                if (activeBtn) {
+                    activeBtn.classList.add('playing');
+                    activeBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                }
+
+            } catch (err) {
+                console.error('Ошибка воспроизведения:', err);
+                showToast('❌ Не удалось воспроизвести', 'error');
+            }
+        };
+
+        // УПРАВЛЕНИЕ ПЛЕЕРОМ
+        window.togglePlayerPlay = () => {
+            if (!currentAudio) return;
+
+            if (isPlaying) {
+                currentAudio.pause();
+                isPlaying = false;
+                document.getElementById('playerPlayBtn').innerHTML = '<i class="fas fa-play"></i>';
+                document.querySelectorAll('.message-play-btn').forEach(btn => {
+                    btn.classList.remove('playing');
+                    btn.innerHTML = '<i class="fas fa-play"></i>';
+                });
+            } else {
+                currentAudio.play();
+                isPlaying = true;
+                document.getElementById('playerPlayBtn').innerHTML = '<i class="fas fa-pause"></i>';
+                const activeBtn = document.querySelector(`.message-item[data-id="${currentMessageId}"] .message-play-btn`);
+                if (activeBtn) {
+                    activeBtn.classList.add('playing');
+                    activeBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                }
+            }
+        };
+
+        window.seekPlayer = (event) => {
+            if (!currentAudio) return;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const x = (event.clientX - rect.left) / rect.width;
+            currentAudio.currentTime = x * currentAudio.duration;
+        };
+
+        window.closePlayer = () => {
+            stopAudio();
+            document.getElementById('player').classList.remove('active');
+        };
+
+        function stopAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                isPlaying = false;
+                currentAudio = null;
+                currentMessageId = null;
+            }
+            document.getElementById('playerPlayBtn').innerHTML = '<i class="fas fa-play"></i>';
+            document.querySelectorAll('.message-play-btn').forEach(btn => {
+                btn.classList.remove('playing');
+                btn.innerHTML = '<i class="fas fa-play"></i>';
+            });
+        }
+
+        // ОЧИСТИТЬ ВСЕ СООБЩЕНИЯ
+        window.clearAllMessages = () => {
+            if (!confirm('Удалить все сообщения?')) return;
+
+            db.ref('radio/messages').once('value', (snapshot) => {
+                const promises = [];
+                snapshot.forEach((child) => {
+                    const id = child.key;
+                    promises.push(db.ref('radio/messages/' + id).remove());
+                    promises.push(storage.ref('radio/audio/' + id + '.webm').delete().catch(() => {}));
+                });
+                Promise.all(promises).then(() => {
+                    showToast('🗑️ Все сообщения удалены', 'info');
+                });
+            });
+        };
+
+        // АВТОМАТИЧЕСКАЯ ОСТАНОВКА ПРИ ОБНОВЛЕНИИ СТРАНИЦЫ
+        window.addEventListener('beforeunload', () => {
+            if (isRecording && mediaRecorder) {
+                mediaRecorder.stop();
+            }
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            db.ref('radio/listeners/' + userId).remove();
+        });
+
+        // ЗАПУСК
+        loadMessages();
+        updateStatus('offline');
+
+        // СЛУШАЕМ НОВЫЕ СООБЩЕНИЯ
+        db.ref('radio/messages').on('child_added', (snapshot) => {
+            // Звуковой сигнал нового сообщения (опционально)
+            try {
+                const audio = new Audio();
+                audio.src = 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0Y...';
+                // Простой бип через Web Audio
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 880;
+                gain.gain.value = 0.15;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+                osc.stop(ctx.currentTime + 0.15);
+            } catch(e) {}
+        });
+
+        console.log('🎙️ WHOPPER RADIO запущен!');
+        console.log('🆔 Ваш ID:', userId);
+        console.log('🔑 Команды: startRecording(), stopRecording()');
+    </script>
+</body>
+</html>
